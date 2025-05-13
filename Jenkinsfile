@@ -13,6 +13,7 @@ pipeline {
                             sh 'aws sts get-caller-identity'
                             echo "Login sucessful" 
                             echo "Fetching running instances for the TAG Project=SSH-AUTO"
+                            // Comment:
                             // future update: we can bring a feature to this pipeline to give a user input to fetch the users choice of TAG
                             // so this can be use to fetch instances of multiple tags to perform package updates  
                             sh '''
