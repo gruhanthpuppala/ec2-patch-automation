@@ -1,0 +1,154 @@
+Started by user gruhanth
+Obtained Jenkinsfile from git https://github.com/gruhanthpuppala/ec2-patch-automation.git
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/package-updater-pipeline
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/package-updater-pipeline/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/gruhanthpuppala/ec2-patch-automation.git # timeout=10
+Fetching upstream changes from https://github.com/gruhanthpuppala/ec2-patch-automation.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.39.5'
+ > git fetch --tags --force --progress -- https://github.com/gruhanthpuppala/ec2-patch-automation.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision 847e3d67c749903e07540f755b265a093c9194e2 (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 847e3d67c749903e07540f755b265a093c9194e2 # timeout=10
+Commit message: "removing pipeline_script.groovy as I renamed the file"
+ > git rev-list --no-walk c9d3feeffde4dd000f2e414d54fa5576fda4bbcf # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (AWS env setup & Fetch Instance details)
+[Pipeline] echo
+========================================================================================================
+[Pipeline] echo
+Logging into AWS CLI
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+Fetching creds from the secrets
+[Pipeline] withCredentials
+WARNING: Unknown parameter(s) found for class type 'com.cloudbees.jenkins.plugins.awscredentials.AmazonWebServicesCredentialsBinding': variablePrefix
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] echo
+Setting AWS ENV...
+[Pipeline] sh
++ aws sts get-caller-identity
+{
+    "UserId": "AIDATQZCSNT6CMGLQCV7R",
+    "Account": "242201292028",
+    "Arn": "arn:aws:iam::242201292028:user/jenkins-user"
+}
+[Pipeline] echo
+Login sucessful
+[Pipeline] echo
+Fetching running instances for the TAG Project=SSH-AUTO
+[Pipeline] sh
++ aws ec2 describe-instances --filters Name=tag:Project,Values=SSH-AUTO Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] echo
+Collecting the data required.....
+[Pipeline] echo
+========================================================================================================
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Data Existance Check)
+[Pipeline] echo
+========================================================================================================
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ test -f public_ips.txt
+[Pipeline] echo
+Data exist and ready to update the packages
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] echo
+========================================================================================================
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Login into instance to update packages)
+[Pipeline] echo
+========================================================================================================
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] echo
+Found 3 IP(s), performing SSH into each and update the packages
+[Pipeline] sshagent
+[ssh-agent] Using credentials ec2-user (This is the private keys to login into other instances)
+$ ssh-agent
+SSH_AUTH_SOCK=/tmp/ssh-7aGGoVJYwqiI/agent.481
+SSH_AGENT_PID=484
+Running ssh-add (command line suppressed)
+Identity added: /var/jenkins_home/workspace/package-updater-pipeline@tmp/private_key_17575028279649893732.key (/var/jenkins_home/workspace/package-updater-pipeline@tmp/private_key_17575028279649893732.key)
+[ssh-agent] Started.
+[Pipeline] {
+[Pipeline] echo
+Trying to connect 52.91.72.182
+[Pipeline] sh
++ ssh -o StrictHostKeyChecking=no -o BatchMode=yes ec2-user@52.91.72.182 sudo yum update -y
+Warning: Permanently added '52.91.72.182' (ED25519) to the list of known hosts.
+Loaded plugins: extras_suggestions, langpacks, priorities, update-motd
+No packages marked for update
+[Pipeline] echo
+Connected to 52.91.72.182 and performed the update.
+[Pipeline] echo
+Update completed
+[Pipeline] echo
+Trying to connect 54.167.162.24
+[Pipeline] sh
++ ssh -o StrictHostKeyChecking=no -o BatchMode=yes ec2-user@54.167.162.24 sudo yum update -y
+Warning: Permanently added '54.167.162.24' (ED25519) to the list of known hosts.
+Loaded plugins: extras_suggestions, langpacks, priorities, update-motd
+No packages marked for update
+[Pipeline] echo
+Connected to 54.167.162.24 and performed the update.
+[Pipeline] echo
+Update completed
+[Pipeline] echo
+Trying to connect 44.206.233.79
+[Pipeline] sh
++ ssh -o StrictHostKeyChecking=no -o BatchMode=yes ec2-user@44.206.233.79 sudo yum update -y
+Warning: Permanently added '44.206.233.79' (ED25519) to the list of known hosts.
+Loaded plugins: extras_suggestions, langpacks, priorities, update-motd
+No packages marked for update
+[Pipeline] echo
+Connected to 44.206.233.79 and performed the update.
+[Pipeline] echo
+Update completed
+[Pipeline] }
+$ ssh-agent -k
+unset SSH_AUTH_SOCK;
+unset SSH_AGENT_PID;
+echo Agent pid 484 killed;
+[ssh-agent] Stopped.
+[Pipeline] // sshagent
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] echo
+========================================================================================================
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: SUCCESS
